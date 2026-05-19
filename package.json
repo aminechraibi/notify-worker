@@ -1,0 +1,45 @@
+{
+  "name": "notify-worker",
+  "version": "1.0.0",
+  "description": "Lightweight cross-platform CLI background worker that shows desktop notifications",
+  "main": "src/index.js",
+  "type": "module",
+  "bin": {
+    "notify-worker": "./bin/notify-worker.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aminechraibi/notify-worker.git"
+  },
+  "scripts": {
+    "test": "vitest",
+    "test:run": "vitest run",
+    "lint": "eslint .",
+    "format": "prettier --write ."
+  },
+  "keywords": [
+    "notification",
+    "worker",
+    "cli",
+    "background",
+    "desktop"
+  ],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/aminechraibi/notify-worker/issues"
+  },
+  "homepage": "https://github.com/aminechraibi/notify-worker#readme",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "dependencies": {
+    "commander": "^11.1.0",
+    "node-notifier": "^10.0.1"
+  },
+  "devDependencies": {
+    "eslint": "^8.56.0",
+    "prettier": "^3.2.4",
+    "vitest": "^1.2.1"
+  }
+}

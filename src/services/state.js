@@ -1,11 +1,13 @@
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
-import { dirname, join } from 'path';
-import { fileURLToPath } from 'url';
+import { join, dirname } from 'path';
+import { homedir } from 'os';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+function getGlobalStateDir() {
+  const home = homedir();
+  return join(home, '.notify-worker');
+}
 
-const stateDir = join(__dirname, '..', '..', 'state');
+const stateDir = getGlobalStateDir();
 
 export function getStatePath() {
   return join(stateDir, 'state.json');
@@ -13,6 +15,10 @@ export function getStatePath() {
 
 export function getPidPath() {
   return join(stateDir, 'worker.pid');
+}
+
+export function getReloadMarkerPath() {
+  return join(stateDir, 'reload.marker');
 }
 
 export function getState() {

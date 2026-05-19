@@ -1,14 +1,9 @@
 import { sendNotificationSafe } from '../services/notification.js';
 import { loadMessages, getNextMessage, cycleIndex } from '../services/messages.js';
-import { getState, saveState } from '../services/state.js';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+import { getState, saveState, getReloadMarkerPath } from '../services/state.js';
 import { existsSync, unlinkSync, readFileSync } from 'fs';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-const reloadMarkerPath = join(__dirname, '..', '..', 'state', 'reload.marker');
+const reloadMarkerPath = getReloadMarkerPath();
 
 let intervalId = null;
 let reloadCheckInterval = null;
@@ -101,6 +96,11 @@ process.on('SIGINT', () => {
 
 const intervalArg = process.argv[2];
 currentMessagesFile = process.argv[3] || 'messages/sentences.txt';
+const uniqueId = process.argv[4] || '';
+
+if (uniqueId) {
+  process.title = uniqueId;
+}
 
 const interval = parseInt(intervalArg, 10) || 15;
 

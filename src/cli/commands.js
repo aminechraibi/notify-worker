@@ -2,11 +2,52 @@ import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
-import { getState, saveState } from '../services/state.js';
+import { getState, saveState, getReloadMarkerPath } from '../services/state.js';
 import { killProcess } from '../services/pid.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+const WORKER_UNIQUE_NAME = 'notify-worker-daemon';
+
+async function findWorkerProcess() {
+  const platform = process.platform;
+
+  return new Promise((resolve) => {
+    let child;
+
+    if (platform === 'win32') {
+      child = spawn('wmic', ['process', 'where', `commandline like "%${WORKER_UNIQUE_NAME}%"`, 'get', 'processid'], {
+        shell: true
+      });
+    } else if (platform === 'darwin' || platform === 'linux') {
+      child = spawn('pgrep', ['-f', WORKER_UNIQUE_NAME]);
+    } else {
+      resolve(null);
+      return;
+    }
+
+    let output = '';
+    child.stdout.on('data', (data) => {
+      output += data.toString();
+    });
+
+    child.on('close', () => {
+      if (platform === 'win32') {
+        const lines = output.trim().split('\n').filter(line => line.trim() && !line.includes('ProcessId'));
+        const pids = lines.map(line => parseInt(line.trim(), 10)).filter(pid => !isNaN(pid));
+        resolve(pids[0] || null);
+      } else {
+        const pid = parseInt(output.trim(), 10);
+        resolve(!isNaN(pid) ? pid : null);
+      }
+    });
+
+    child.on('error', () => {
+      resolve(null);
+    });
+  });
+}
 
 function getWorkerPath() {
   return join(__dirname, '..', 'worker', 'worker.js');
@@ -73,7 +114,7 @@ export async function startWorker(interval, messagesFile) {
   }
 
   const workerPath = getWorkerPath();
-  const child = spawn(process.execPath, [workerPath, String(interval), messagesFile], {
+  const child = spawn(process.execPath, [workerPath, String(interval), messagesFile, WORKER_UNIQUE_NAME], {
     detached: true,
     stdio: 'ignore'
   });
@@ -97,20 +138,28 @@ export async function startWorker(interval, messagesFile) {
 }
 
 export async function stopWorker() {
-  const state = getState();
+  let state = getState();
+  let pidToKill = state.pid;
 
   if (!state.running || !state.pid) {
-    console.log('Worker is not running');
-    return;
+    const foundPid = await findWorkerProcess();
+    if (foundPid) {
+      console.log('Found running worker (state file was missing)');
+      pidToKill = foundPid;
+    } else {
+      console.log('Worker is not running');
+      return;
+    }
   }
 
   try {
-    await killProcess(state.pid);
+    await killProcess(pidToKill);
     console.log('Worker stopped');
   } catch (error) {
     console.log('Warning:', error.message);
   }
 
+  state = getState();
   state.running = false;
   state.pid = null;
   state.startedAt = null;
@@ -181,10 +230,10 @@ export async function reloadWorker(newMessagesFile) {
   }
 
   const messagesFile = newMessagesFile || state.messagesFile || 'messages/sentences.txt';
-  const absolutePath = join(__dirname, '..', '..', messagesFile);
+  const absolutePath = join(process.cwd(), messagesFile);
 
-  const stateDir = join(__dirname, '..', '..', 'state');
-  const reloadMarkerPath = join(stateDir, 'reload.marker');
+  const reloadMarkerPath = getReloadMarkerPath();
+  const stateDir = dirname(reloadMarkerPath);
 
   if (!existsSync(stateDir)) {
     mkdirSync(stateDir, { recursive: true });

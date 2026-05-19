@@ -36,7 +36,7 @@ export function clearPid() {
 }
 
 export function killProcess(pid) {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     try {
       process.kill(pid, 'SIGTERM');
       setTimeout(() => {
@@ -47,8 +47,8 @@ export function killProcess(pid) {
         }
         resolve();
       }, 1000);
-    } catch (error) {
-      reject(new Error(`Failed to kill process: ${error.message}`));
+    } catch {
+      resolve();
     }
   });
 }

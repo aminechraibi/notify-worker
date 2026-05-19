@@ -1,4 +1,11 @@
 import notifier from 'node-notifier';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+const iconPath = join(__dirname, '..', '..', 'assets', 'icon.svg');
 
 export function sendNotification(message, title = 'Notify Worker') {
   return new Promise((resolve, reject) => {
@@ -8,7 +15,8 @@ export function sendNotification(message, title = 'Notify Worker') {
         message: message,
         sound: true,
         wait: false,
-        appID: 'notify-worker'
+        appID: 'notify-worker',
+        icon: iconPath
       },
       (err, response) => {
         if (err) {

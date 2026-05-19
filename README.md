@@ -118,7 +118,7 @@ npx notify-worker start --every 15 --messages "my-notifications.txt"
 npx notify-worker start --messages "C:/Users/You/notifications.txt"
 ```
 
-If the messages file doesn't exist or is empty, a default file is automatically created at that location.
+**No messages file?** No problem! If the file doesn't exist or is empty, a default messages file is automatically created at that location with sample reminders.
 
 ## How Notifications Work
 
